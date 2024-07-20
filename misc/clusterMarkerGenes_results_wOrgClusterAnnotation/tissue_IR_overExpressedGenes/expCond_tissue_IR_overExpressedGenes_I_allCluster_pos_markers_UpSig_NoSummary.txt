@@ -1,0 +1,6 @@
+cluster	geneNo
+T/NK1	161
+T/NK2	159
+T/NK3	338
+MP	382
+B/P	201

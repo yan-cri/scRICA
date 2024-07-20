@@ -1,0 +1,12 @@
+clusters	cellNo	cellNo_A	cellNo_F	cellNo_I	cellNo_A_Per	cellNo_F_Per	cellNo_I_Per
+B/P	800	198	357	245	1.01	1.35	1.69
+Celiatic epthelial	1127	376	488	263	1.91	1.85	1.82
+Endothelial	5927	1717	2290	1920	8.73	8.66	13.28
+Lymphatic	1523	420	830	273	2.13	3.14	1.89
+Macrophage	2213	808	852	553	4.11	3.22	3.82
+Mast	428	72	169	187	0.37	0.64	1.29
+Pericytes	9449	4132	3562	1755	21	13.47	12.13
+Secretory epthelial	3614	1060	1987	567	5.39	7.52	3.92
+Smooth mucle	2987	641	1216	1130	3.26	4.6	7.81
+Stromal	27695	8453	12868	6374	42.96	48.68	44.07
+T/NK	4811	1799	1816	1196	9.14	6.87	8.27
