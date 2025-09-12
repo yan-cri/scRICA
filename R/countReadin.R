@@ -13,6 +13,7 @@
 #' @param minFeatures specify the minimum number of expressed gene features for cells per cell included in the analysis, this parameter is used by Seurat, by default = 200.
 #' @param mtFiltering logical option to indicate whether to filter high mitochondrial content specified in option 'mtPerCutoff', by default 'FALSE'.
 #' @param mtPerCutoff if 'mtFiltering = T', this option is required to indicate the percentage cut-off for mitochondrial content filtering.
+#' @param norm.method 3 normalization options, log.normalize, SCT, or SCT.regression with regression on rRNA and MT contents.
 #'
 #' @importFrom Seurat Read10X
 #' @importFrom tools file_ext
@@ -60,7 +61,7 @@
 ## 5. 'featureViolin_', names(seuratObjList)[x].pdf: featureViolin plot for each items in 'cellrangerResList'
 ##    if 'mtFiltering' is on: 'featureViolin_', names(seuratObjList)[x] +'_afterFiltering.pdf'
 ## 6. 'topVariableFeature_', names(seuratObjList)[x], '.pdf': topVariableFeature plot for each items in 'cellrangerResList'
-processQC <- function(metadata, multiomics = F, extraFilter=F, resDirName=NULL, genomeSpecies=NULL, minCells=3, minFeatures=200, mtFiltering=F, mtPerCutoff=NULL, nfeatures = 5000) {
+processQC <- function(metadata, multiomics = F, extraFilter=F, resDirName=NULL, genomeSpecies=NULL, minCells=3, minFeatures=200, mtFiltering=F, mtPerCutoff=NULL, nfeatures = 5000, norm.method = 'log.norm') {
   ##--------------------------------------------------------------------------------------##
   if (!all(c("sample", "path", 'expCond1',"doubletsRmMethod" ) %in% colnames(metadata))) stop('Please provide metadata table with at least 4 columns: sample, path, expCond1, and doubletsRmMethod')
   ## ---
@@ -298,7 +299,8 @@ processQC <- function(metadata, multiomics = F, extraFilter=F, resDirName=NULL, 
     ## 1).1 calculating mitochondrial content
     # print(sprintf('%s mitochondrial genes are processed', length(grep('^MT-', seuratObj@assays$RNA@data@Dimnames[[1]])) ))
     # seuratObj[['percent.mt']] <- PercentageFeatureSet(object = seuratObj, pattern = '^MT-')
-    print(sprintf('%s mitochondrial genes are processed', length(grep(mtPatten(as.character(genomeSpecies)), seuratObj@assays$RNA@data@Dimnames[[1]])) ))
+    print("mitochondrial genes are processed")
+    # print(sprintf('%s mitochondrial genes are processed', length(grep(mtPatten(as.character(genomeSpecies)), seuratObj@assays$RNA@data@Dimnames[[1]])) ))
     seuratObj[['percent.mt']] <- Seurat::PercentageFeatureSet(object = seuratObj, pattern = mtPatten(as.character(genomeSpecies)) )
     print(head(seuratObj@meta.data, 5))
     ## calculating no. of cells with certain mitochondrial percentage
@@ -317,7 +319,8 @@ processQC <- function(metadata, multiomics = F, extraFilter=F, resDirName=NULL, 
     }
     ## ---
     ## calculate rRNA content
-    print(sprintf('%s rRNA genes are processed', length(grep(rRNAcontent(as.character(genomeSpecies)), seuratObj@assays$RNA@data@Dimnames[[1]])) ))
+    print("rRNA genes are processed")
+    # print(sprintf('%s rRNA genes are processed', length(grep(rRNAcontent(as.character(genomeSpecies)), seuratObj@assays$RNA@data@Dimnames[[1]])) ))
     seuratObj[['rRNA.content']] <- Seurat::PercentageFeatureSet(object = seuratObj, pattern = rRNAcontent(as.character(genomeSpecies)) )
     for(k in seq_along(1:20)){
       rRNAper[[k]] <- sum(seuratObj@meta.data$rRNA.content < 5*k) / length(seuratObj@meta.data$rRNA.content)
@@ -363,7 +366,7 @@ processQC <- function(metadata, multiomics = F, extraFilter=F, resDirName=NULL, 
       print(plot1 + plot2)
       dev.off()
       pdf(file = paste(qcPlotsDir, '/featureViolin_', names(seuratObjList)[x], '_afterFiltering.pdf', sep = ''), width = 10, height = 6)
-      vlnFeaturePlot <- Seurat::VlnPlot(seuratObj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "rRNA.content"), ncol = 4)
+      vlnFeaturePlot <- Seurat::VlnPlot(seuratObj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "rRNA.content"), ncol = 4, layer = 'count')
       print(vlnFeaturePlot)
       dev.off()
       print(sprintf('Processing sample %s (%s), After filtering out high percentage contained mitochondrial genes, low and high gene feature expressed cells, cell number reduced from %s to %s.', x, names(seuratObjList)[x], dim(seuratObjBeforeFilter@meta.data)[1], dim(seuratObj@meta.data)[1] ))
@@ -381,7 +384,20 @@ processQC <- function(metadata, multiomics = F, extraFilter=F, resDirName=NULL, 
     }
     ## -
     ## 2). Normalization: 'normalization.method' & 'scale.factor' are default options
-    seuratObj                   <- Seurat::NormalizeData(seuratObj, normalization.method = "LogNormalize", scale.factor = 10000)
+    # print('Norm-=-=-=-=-NOrm-=-=-=-=-NOrm-=-=-=-=-NOrm')
+    if (norm.method=='log.norm') {
+      print("Normalization method: log normalization")
+      seuratObj                <- Seurat::NormalizeData(seuratObj, normalization.method = "LogNormalize", scale.factor = 10000)
+    } else if (norm.method=='SCT') {
+      print("Normalization method: SCT")
+      seuratObj                <- Seurat::SCTransform(object = seuratObj, assay = 'RNA', return.only.var.genes = FALSE, verbose = F)
+    } else if (norm.method=='SCT.regression') {
+      print("Normalization method: SCT.regression, regression out rRNA and MT contents. ")
+      seuratObj                <- Seurat::SCTransform(object = seuratObj, assay = 'RNA',
+                                                      vars.to.regress = c('percent.mt', 'rRNA.content'),
+                                                      return.only.var.genes = FALSE, verbose = F)
+    }
+
     ## 3). Find variable features, by default top 2000
     ## by default, select top 2000 features, vst is also default method, other options are 'mean.var.plot(mvp)' and 'dispersion (disp)'
     seuratObj                   <- Seurat::FindVariableFeatures(seuratObj, selection.method = 'vst', nfeatures = nfeatures)
@@ -409,7 +425,7 @@ processQC <- function(metadata, multiomics = F, extraFilter=F, resDirName=NULL, 
   print('Step 2: END check mitochondrial content & normalization')
   print('---===---')
   ##--------------------------------------------------------------------------------------##
-  return(list('countReadInOjb' = seuratObjList, 'qcProcessObj' = seuratQcProcessObjList, 'resDir' = resDir))
+  return(list('countReadInOjb' = seuratObjList, 'qcProcessObj' = seuratQcProcessObjList, 'resDir' = resDir,  'norm.method' =  norm.method))
 }
 ##--------------------------------------------------------------------------------------##
 ## Minor fns to return mitochondrial content search pattern

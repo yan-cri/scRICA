@@ -23,36 +23,31 @@
 Improved_Seurat_Pre_Process <- function (seuratObject, num_genes = 50, write_files = FALSE, data_type = "counts") {
 
   version = packageVersion("Seurat")
-  # seuratObject = UpdateSeuratObject(object = seuratObject)
+  seuratObject = UpdateSeuratObject(object = seuratObject)
   if (data_type == "counts") {
-    expression = as.data.frame(seuratObject@assays[["RNA"]]@counts)
-  }
-  else if (data_type == "data") {
-    expression = as.data.frame(seuratObject@assays[["RNA"]]@data)
-  }
-  else if (data_type == "scaled.data") {
-    expression = as.data.frame(seuratObject@assays[["RNA"]]@scale.data)
+    expression = as.data.frame(seuratObject@assays[["RNA"]]$counts)
+  }  else if (data_type == "data") {
+    expression = as.data.frame(seuratObject@assays[["RNA"]]$data)
+  }  else if (data_type == "scaled.data") {
+    expression = as.data.frame(seuratObject@assays[["RNA"]]$scale.data)
   }
   seuratObject.markers = FindAllMarkers(object = seuratObject,
                                         only.pos = TRUE, min.pct = 0.25)
   if (version >= package_version(x = "3.9.9")) {
     genes = seuratObject.markers %>% group_by(cluster) %>%
       top_n(n = num_genes, wt = avg_log2FC)
-  }
-  else if (version >= package_version(x = "3.0.0") && version <
+  }  else if (version >= package_version(x = "3.0.0") && version <
            package_version(x = "3.9.9")) {
     genes = seuratObject.markers %>% group_by(cluster) %>%
       top_n(n = num_genes, wt = avg_logFC)
-  }
-  else {
+  }  else {
     print("This function only works with Seurat 3 or 4. Please update Seurat.")
   }
   clusters = as.data.frame(Idents(object = seuratObject))
   colnames(expression) = gsub("-", ".", colnames(expression))
   if (class(clusters[, 1]) == "character") {
     clusters[, 1] = gsub("-", ".", clusters[, 1])
-  }
-  else {
+  }  else {
     row.names(clusters) = gsub("-", ".", row.names(clusters))
   }
   if (class(genes$cluster) == "factor") {
@@ -61,14 +56,12 @@ Improved_Seurat_Pre_Process <- function (seuratObject, num_genes = 50, write_fil
         1
       clusters[, 1] = as.numeric(as.character(clusters[,
                                                        1])) + 1
-    }
-    else if (min(as.numeric(as.character(genes$cluster))) ==
+    } else if (min(as.numeric(as.character(genes$cluster))) ==
              1) {
       genes$cluster = as.numeric(as.character(genes$cluster))
       clusters[, 1] = as.numeric(as.character(clusters[,
                                                        1]))
-    }
-    else {
+    } else {
       print("Unexpected cluster numbering scheme. Cluster numbers are expected to be continuous numbers starting from either 0 or 1. Please check conversion for correctness following this function.")
     }
   }

@@ -159,10 +159,18 @@ getHippoRes <- function(resDir=NULL, rds=NULL, newAnnotation=F, newAnnotationRsc
   inputDataPrep <- seuratObjFinal
   if (sparseMatrix) {
     print("lighthippo input is a sparse matrix")
-    inputData               <- inputDataPrep@assays$RNA@counts ## sparse matrix
+    if (as.numeric(seuratObj@version$major) >= 5 ) {
+      inputData               <- inputDataPrep@assays$RNA$counts ## sparse matrix
+    } else {
+      inputData               <- inputDataPrep@assays$RNA@counts ## sparse matrix
+    }
   } else {
     print("lighthippo input is a dense matrix")
-    inputData               <- as.matrix(inputDataPrep@assays$RNA@counts) ##dense matrix
+    if (as.numeric(seuratObj@version$major) >= 5 ){
+      inputData               <- as.matrix(inputDataPrep@assays$RNA$counts) ##dense matrix
+    }else {
+      inputData               <- as.matrix(inputDataPrep@assays$RNA@counts) ##dense matrix
+    }
   }
   # print(head(inputData[,1:4]))
   # print(dim(inputData))

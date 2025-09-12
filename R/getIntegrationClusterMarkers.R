@@ -56,9 +56,10 @@
 #' 3. 'resDir': full path of results directory, where the entire integration analysis results are saved.
 #'
 ##----------------------------------------------------------------------------------------
-getClusterMarkers <- function(qcProcessedResults, integrationMethod = 'CCA', nfeatures = 2000, resDirName = NULL, topN = 10, ribo = F, int.k.weight = 100) {
+getClusterMarkers <- function(qcProcessedResults, integrationMethod = 'RPCA', nfeatures = 2000, resDirName = NULL, topN = 10, ribo = F, int.k.weight = 100) {
   ## ---
   topN                          <- as.numeric(topN)
+  norm.method                   <- as.character(qcProcessedResults$norm.method)
   if ('resDir' %in% names(qcProcessedResults) & 'countReadInOjb' %in% names(qcProcessedResults) ){
     qcProcessedSeuratObjList    <- qcProcessedResults$qcProcessObj
     resDir                      <- qcProcessedResults$resDir
@@ -103,26 +104,74 @@ getClusterMarkers <- function(qcProcessedResults, integrationMethod = 'CCA', nfe
     print(sprintf('%s samples will be integrated', length(qcProcessedSeuratObjList)))
     print(sprintf("%s anchor integration is implemented on %s features.", integrationMethod, nfeatures))
     ## if provided 'qcProcessedSeuratObjList' has not implemented with 'FindVariableFeatures', do it here with normalization again
-    if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))==0)))) {
-      print("Note: some input data in 'qcProcessedResults' seems not to be normalized, before integration, conducing normalization again")
-      qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
-        x <- Seurat::NormalizeData(x, normalization.method = "LogNormalize", scale.factor = 10000)
-        x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
-        if (ribo == TRUE) {
-          Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
-        }
-      })
-    } else if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))<nfeatures)))) {
-      print("Note: some input data in 'qcProcessedResults' has fewer number of detected varialbe features requested in 'nfeatures' for integration, before integration, conducing normalization again")
-      qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
-        x <- Seurat::NormalizeData(x, normalization.method = "LogNormalize", scale.factor = 10000)
-        x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
-        if (ribo == TRUE) {
-          Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
-        }
-      })
-    } else {
-      print("Note: input data in 'qcProcessedResults' has been appropriately normalized, no need to normalize before integration.")
+    if(norm.method=='log.norm') {
+      if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))==0)))) {
+        print("Note: some input data in 'qcProcessedResults' seems not to be log normalized, before integration, conducing log normalization again")
+        qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
+          x <- Seurat::NormalizeData(x, normalization.method = "LogNormalize", scale.factor = 10000)
+          x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
+          if (ribo == TRUE) {
+            Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
+          }
+        })
+      } else if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))<nfeatures)))) {
+        print("Note: some input data in 'qcProcessedResults' has fewer number of detected varialbe features requested in 'nfeatures' for integration, before integration, conducing log normalization again")
+        qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
+          x <- Seurat::NormalizeData(x, normalization.method = "LogNormalize", scale.factor = 10000)
+          x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
+          if (ribo == TRUE) {
+            Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
+          }
+        })
+      } else {
+        print("Note: input data in 'qcProcessedResults' has been appropriately log normalized, no need to normalize before integration.")
+      }
+    } else if (norm.method=='SCT'){
+      if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))==0)))) {
+        print("Note: some input data in 'qcProcessedResults' seems not to be SCT normalized, before integration, conducing SCT normalization again")
+        qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
+          x <- Seurat::SCTransform(object = x, assay = 'RNA', return.only.var.genes = FALSE, verbose = FALSE)
+          x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
+          if (ribo == TRUE) {
+            Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
+          }
+        })
+      } else if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))<nfeatures)))) {
+        print("Note: some input data in 'qcProcessedResults' has fewer number of detected varialbe features requested in 'nfeatures' for integration, before integration, conducing SCT normalization again")
+        qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
+          x <- Seurat::SCTransform(object = x, assay = 'RNA', return.only.var.genes = FALSE, verbose = FALSE)
+          x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
+          if (ribo == TRUE) {
+            Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
+          }
+        })
+      } else {
+        print("Note: input data in 'qcProcessedResults' has been appropriately SCT normalized, no need to normalize before integration.")
+      }
+    } else if (norm.method=='SCT.regression'){
+      if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))==0)))) {
+        print("Note: some input data in 'qcProcessedResults' seems not to be SCT normalized, before integration, conducing SCT normalization again")
+        qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
+          x <- Seurat::SCTransform(object = x, assay = 'RNA', vars.to.regress = c('percent.mt', 'rRNA.content'),
+                                   return.only.var.genes = FALSE, verbose = FALSE)
+          x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
+          if (ribo == TRUE) {
+            Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
+          }
+        })
+      } else if (any(unlist(lapply(qcProcessedSeuratObjList, function(x) length(Seurat::VariableFeatures(x))<nfeatures)))) {
+        print("Note: some input data in 'qcProcessedResults' has fewer number of detected varialbe features requested in 'nfeatures' for integration, before integration, conducing SCT normalization again")
+        qcProcessedSeuratObjList <- lapply(X = qcProcessedSeuratObjList, FUN = function(x) {
+          x <- Seurat::SCTransform(object = x, assay = 'RNA', vars.to.regress = c('percent.mt', 'rRNA.content'),
+                                   return.only.var.genes = FALSE, verbose = FALSE)
+          x <- Seurat::FindVariableFeatures(x, selection.method = 'vst', nfeatures = nfeatures)
+          if (ribo == TRUE) {
+            Seurat::VariableFeatures(x) <- Seurat::VariableFeatures(x)[-grep("^RP[SL]", Seurat::VariableFeatures(x))]
+          }
+        })
+      } else {
+        print("Note: input data in 'qcProcessedResults' has been appropriately SCT normalized, no need to normalize before integration.")
+      }
     }
     ##--------------------------------------------------------------------------------------##
     features                    <- SelectIntegrationFeatures(object.list = qcProcessedSeuratObjList, nfeatures = nfeatures)
@@ -149,7 +198,12 @@ getClusterMarkers <- function(qcProcessedResults, integrationMethod = 'CCA', nfe
     }
     ##--------------------------------------------------------------------------------------##
     ## 3.2 Integrating data based on found anchors above
-    seuratObjIntegrated         <- IntegrateData(anchorset = anchors, k.weight = int.k.weight)
+    if (norm.method == 'log.norm') {
+      seuratObjIntegrated         <- IntegrateData(anchorset = anchors, k.weight = int.k.weight)
+    }else if (norm.method == 'SCT' | norm.method == 'SCT.regression') {
+      seuratObjIntegrated         <- IntegrateData(anchorset = anchors, k.weight = int.k.weight,  normalization.method = "SCT" )
+    }
+
     print(sprintf('End Step 1: data integration at %s', Sys.time()))
     print('---===---===---===---===---===---')
     ##--------------------------------------------------------------------------------------##
@@ -168,6 +222,10 @@ getClusterMarkers <- function(qcProcessedResults, integrationMethod = 'CCA', nfe
   # seuratObjFinal <- JackStraw(seuratObjFinal, num.replicate = 100)
   # seuratObjFinal <- ScoreJackStraw(seuratObjFinal, dims = 1:20)
   elbowPlot                     <- ElbowPlot(seuratObjFinal, ndims = 30)
+  ## -
+  pdf(file = file.path(resDir, 'elbow_plot.pdf'), width = 6, height = 4)
+  print(elbowPlot)
+  dev.off()
   ## 4.3 umap, tsne, knn/clusters
   seuratObjFinal                <- RunUMAP(seuratObjFinal, reduction = "pca", dims = 1:20)
   seuratObjFinal                <- FindNeighbors(seuratObjFinal, reduction = "pca", dims = 1:20)

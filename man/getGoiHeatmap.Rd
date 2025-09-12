@@ -11,6 +11,7 @@ getGoiHeatmap(
   newAnnotation = F,
   newAnnotationRscriptName = NULL,
   slot = "scale.data",
+  samp.col.name = "expCond",
   goiFname = NULL,
   geneNames = NULL,
   expCondCheck = "sample",

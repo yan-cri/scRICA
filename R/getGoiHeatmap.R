@@ -65,7 +65,9 @@
 #' @return the Heatmap of provided GOI(gene of interest) provided by 'geneNames' directly or presented in 'goiFname'.
 #'
 ## ---------------------------------------------------------------------------------------
-getGoiHeatmap <- function(heatmap.view = 'idents', resDir=NULL, rds=NULL, newAnnotation=F, newAnnotationRscriptName=NULL, slot = "scale.data",
+getGoiHeatmap <- function(heatmap.view = 'idents', resDir=NULL, rds=NULL,
+                          newAnnotation=F, newAnnotationRscriptName=NULL,
+                          slot = "scale.data", samp.col.name = 'expCond',
                           goiFname = NULL, geneNames = NULL,
                           expCondCheck='sample', expCondCheckFname = NULL,
                           cellcluster = NULL , expCond = NULL, expCondReorderLevels = NULL,
@@ -184,7 +186,8 @@ getGoiHeatmap <- function(heatmap.view = 'idents', resDir=NULL, rds=NULL, newAnn
   }
   ##--------------------------------------------------------------------------------------##
   ## Assumption: original 'expCond' column represents samples information
-  seuratObjFinal@meta.data$orgSample <- seuratObjFinal$expCond
+  if (!(samp.col.name %in% colnames(seuratObjFinal@meta.data))) print(sprintf("Error: provide sample column name in your rds@meta.data file"))
+  seuratObjFinal@meta.data$orgSample <- seuratObjFinal@meta.data[, match(samp.col.name, colnames(seuratObjFinal@meta.data))]
   ##--------------------------------------------------------------------------------------##
   ## update 'seuratObjFinal@meta.data$expCond'
   if (expCondCheck == 'sample') {
@@ -340,7 +343,7 @@ DoHeatmap2 <- function (object, features = NULL, cells = NULL, group.by = "expCo
   features <- features %||% VariableFeatures(object = object)
   features <- rev(x = unique(x = features))
   disp.max <- disp.max %||% ifelse(test = slot == "scale.data", yes = 2.5, no = 6)
-  possible.features <- rownames(x = SeuratObject::GetAssayData(object = object, slot = slot))
+  possible.features <- rownames(x = SeuratObject::GetAssayData(object = object, layer = slot))
   if (any(!features %in% possible.features)) {
     bad.features <- features[!features %in% possible.features]
     features <- features[features %in% possible.features]
@@ -353,7 +356,7 @@ DoHeatmap2 <- function (object, features = NULL, cells = NULL, group.by = "expCo
                                                              collapse = ", "))
   }
   if (display == 'sample.merge') {
-    data0 <- as.data.frame(x = as.matrix(x = t(x = as.matrix(SeuratObject::GetAssayData(object = object,slot = slot)[features, cells, drop = FALSE]))))
+    data0 <- as.data.frame(x = as.matrix(x = t(x = as.matrix(SeuratObject::GetAssayData(object = object,layer = slot)[features, cells, drop = FALSE]))))
     object <- suppressMessages(expr = SeuratObject::StashIdent(object = object, save.name = "ident"))
     groups.use        <- object[[group.by]][cells, , drop = FALSE]
     groups.use.sample <- object[['orgSample']][cells, , drop = FALSE]
@@ -392,7 +395,7 @@ DoHeatmap2 <- function (object, features = NULL, cells = NULL, group.by = "expCo
     rownames(data) <- data0$cell.groups
     plots <- vector(mode = "list", length = ncol(x = groups.use))
   } else if (display == 'expCond.merge') {
-    data0 <- as.data.frame(x = as.matrix(x = t(x = as.matrix(SeuratObject::GetAssayData(object = object,slot = slot)[features, cells, drop = FALSE]))))
+    data0 <- as.data.frame(x = as.matrix(x = t(x = as.matrix(SeuratObject::GetAssayData(object = object,layer = slot)[features, cells, drop = FALSE]))))
     object <- suppressMessages(expr = SeuratObject::StashIdent(object = object, save.name = "ident"))
     groups.use        <- object[[group.by]][cells, , drop = FALSE]
     if (sum(rownames(groups.use) == rownames(data0))!=dim(data0)[1]) stop("Error: heatmap plot input data and group levels dimension not match")
@@ -402,7 +405,7 @@ DoHeatmap2 <- function (object, features = NULL, cells = NULL, group.by = "expCo
     rownames(data) <- data0$cell.groups
     plots <- vector(mode = "list", length = ncol(x = groups.use))
   } else if (display == 'cell'){
-    data <- as.data.frame(x = as.matrix(x = t(x = as.matrix(SeuratObject::GetAssayData(object = object,slot = slot)[features, cells, drop = FALSE]))))
+    data <- as.data.frame(x = as.matrix(x = t(x = as.matrix(SeuratObject::GetAssayData(object = object,layer = slot)[features, cells, drop = FALSE]))))
     object <- suppressMessages(expr = SeuratObject::StashIdent(object = object, save.name = "ident"))
     if (features.process) {
       data1 = data

@@ -201,113 +201,128 @@ getClusterSummaryReplot <- function(resDir=NULL, rds=NULL, newAnnotation=F, newA
   ## -------------------------------------------------------------------------------------
   ## 1. re-make tSNE plot
   if (clusteringPlotRemake) {
-    print('***************************************************')
-    ## ---
-    print(sprintf('Start step1: remake tSNE/UMAP plots'))
-    newResDir             <- paste(resDir, sprintf('new_tSNE_plot_%s', expCondCheckFname), sep = '/')
-    if(!dir.exists(newResDir)) dir.create(newResDir)
-    ## tsne plot
-    tsneCluster           <- DimPlot(seuratObjFinal, reduction = "tsne", cols = selectedCol, label = T, label.size = 6, repel = T) + labs(title = 'tSNE clustering', x = "tSNE 1", y = 'tSNE 2')
-    tsneClusterNolabel    <- DimPlot(seuratObjFinal, reduction = "tsne", cols = selectedCol, label = F, repel = T) + labs(title = 'tSNE clustering', x = "tSNE 1", y = 'tSNE 2')
-    if (length(levels(as.factor(seuratObjFinal$expCond)))>1) {
-      ## relevel the 'expCond' for split.by= ordering
-      tsneSplit           <- DimPlot(seuratObjFinal, reduction = "tsne", cols = selectedCol, label = T, label.size = 4, repel = T, split.by = 'expCond') + labs(title = 'tSNE clustering', x = "tSNE 1", y = 'tSNE 2')
-    }
-    ## -
-    if (newAnnotation) {
-      plotName1 = paste(newResDir, 'tsne_plot_noLabel_integrate_newAnnotation.pdf', sep = '/')
-      plotName2 = paste(newResDir, 'tsne_plot_wLabel_integrate_newAnnotation.pdf', sep = '/')
-      plotName3 = paste(newResDir, sprintf('tsne_plot_wLabel_newAnnotation_%s.pdf', expCondCheckFname), sep = '/')
+    if (is.null(names(seuratObjFinal@reductions))) {
+      print("Note: no reduction in the provided RDS, no UMAP or TSNE plots can be generated")
     } else {
-      plotName1 = paste(newResDir, 'tsne_plot_noLabel_integrate_orgAnnotation.pdf', sep = '/')
-      plotName2 = paste(newResDir, 'tsne_plot_wLabel_integrate_orgAnnotation.pdf', sep = '/')
-      plotName3 = paste(newResDir, sprintf('tsne_plot_wLabel_orgAnnotation_%s.pdf', expCondCheckFname), sep = '/')
-    }
-    ## -
-    pdf(file = plotName1, width = 5.7, height = 6.7)
-    print(tsneClusterNolabel + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))))
-    dev.off()
-    ## -
-    pdf(file = plotName2, width = 5.7, height = 6.7)
-    print(tsneCluster + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
-    dev.off()
-    ## -
-    if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
-      if ( length(levels(as.factor(seuratObjFinal$expCond))) == 2) {
-        pdf(file = plotName3, width = 11, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 3) {
-        pdf(file = plotName3, width = 13, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 4) {
-        pdf(file = plotName3, width = 21, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) > 4) {
-        pdf(file = plotName3, width = 5.5*length(levels(as.factor(seuratObjFinal$expCond))), height = 7)
+      print('***************************************************')
+      ## ---
+      print(sprintf('Start step1: remake tSNE/UMAP plots'))
+      if ('tsne'%in%names(seuratObjFinal@reductions)) {
+        newResDir             <- paste(resDir, sprintf('new_tSNE_plot_%s', expCondCheckFname), sep = '/')
+        if(!dir.exists(newResDir)) dir.create(newResDir)
+        ## tsne plot
+        tsneCluster           <- DimPlot(seuratObjFinal, reduction = "tsne", cols = selectedCol, label = T, label.size = 6, repel = T) + labs(title = 'tSNE clustering', x = "tSNE 1", y = 'tSNE 2')
+        tsneClusterNolabel    <- DimPlot(seuratObjFinal, reduction = "tsne", cols = selectedCol, label = F, repel = T) + labs(title = 'tSNE clustering', x = "tSNE 1", y = 'tSNE 2')
+        if (length(levels(as.factor(seuratObjFinal$expCond)))>1) {
+          ## relevel the 'expCond' for split.by= ordering
+          tsneSplit           <- DimPlot(seuratObjFinal, reduction = "tsne", cols = selectedCol, label = T, label.size = 4, repel = T, split.by = 'expCond') + labs(title = 'tSNE clustering', x = "tSNE 1", y = 'tSNE 2')
+        }
+        ## -
+        if (newAnnotation) {
+          plotName1 = paste(newResDir, 'tsne_plot_noLabel_integrate_newAnnotation.pdf', sep = '/')
+          plotName2 = paste(newResDir, 'tsne_plot_wLabel_integrate_newAnnotation.pdf', sep = '/')
+          plotName3 = paste(newResDir, sprintf('tsne_plot_wLabel_newAnnotation_%s.pdf', expCondCheckFname), sep = '/')
+        } else {
+          plotName1 = paste(newResDir, 'tsne_plot_noLabel_integrate_orgAnnotation.pdf', sep = '/')
+          plotName2 = paste(newResDir, 'tsne_plot_wLabel_integrate_orgAnnotation.pdf', sep = '/')
+          plotName3 = paste(newResDir, sprintf('tsne_plot_wLabel_orgAnnotation_%s.pdf', expCondCheckFname), sep = '/')
+        }
+        ## -
+        pdf(file = plotName1, width = 5.7, height = 6.7)
+        print(tsneClusterNolabel + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))))
+        dev.off()
+        ## -
+        pdf(file = plotName2, width = 5.7, height = 6.7)
+        print(tsneCluster + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
+        dev.off()
+        ## -
+        if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
+          if ( length(levels(as.factor(seuratObjFinal$expCond))) == 2) {
+            pdf(file = plotName3, width = 11, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 3) {
+            pdf(file = plotName3, width = 13, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 4) {
+            pdf(file = plotName3, width = 21, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) > 4) {
+            pdf(file = plotName3, width = 5.5*length(levels(as.factor(seuratObjFinal$expCond))), height = 7)
+          }
+          # print(tsneSplit + theme1noLegend)
+          print(tsneSplit + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
+          dev.off()
+        }
+      } else {
+        print("NOTE: reduction TSNE does not exist in provided RDS, no TSNE plot can be generated.")
       }
-      # print(tsneSplit + theme1noLegend)
-      print(tsneSplit + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
-      dev.off()
-    }
-    ## --------------------------------------------------------
-    ## 2. re-make UMAP plot
-    newResDir          <- paste(resDir, sprintf('new_UMAP_plot_%s', expCondCheckFname), sep = '/')
-    if(!dir.exists(newResDir)) dir.create(newResDir)
-    ## umap plot
-    umapCluster        <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = T, label.size = 6, repel = T) + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
-    umapClusterNolabel <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = F, repel = T) + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
-    if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
-      ## relevel the 'expCond' for split.by= ordering
-      umapSplit          <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = T, label.size = 4, repel = T, split.by = 'expCond') + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
-      umapSplitNolabel   <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = F, label.size = 4, repel = T, split.by = 'expCond') + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
-    }
-    ## -
-    if (newAnnotation) {
-      plotName1 = paste(newResDir, 'UMAP_plot_noLabel_integrate_newAnnotation.pdf', sep = '/')
-      plotName2 = paste(newResDir, 'UMAP_plot_wLabel_integrate_newAnnotation.pdf', sep = '/')
-      plotName3 = paste(newResDir, sprintf('UMAP_plot_wLabel_newAnnotation_%s.pdf', expCondCheckFname), sep = '/')
-      plotName4 = paste(newResDir, sprintf('UMAP_plot_noLabel_newAnnotation_%s.pdf', expCondCheckFname), sep = '/')
-    } else {
-      plotName1 = paste(newResDir, 'UMAP_plot_noLabel_integrate_orgAnnotation.pdf', sep = '/')
-      plotName2 = paste(newResDir, 'UMAP_plot_wLabel_integrate_orgAnnotation.pdf', sep = '/')
-      plotName3 = paste(newResDir, sprintf('UMAP_plot_wLabel_orgAnnotation_%s.pdf', expCondCheckFname), sep = '/')
-      plotName4 = paste(newResDir, sprintf('UMAP_plot_noLabel_orgAnnotation_%s.pdf', expCondCheckFname), sep = '/')
-    }
-    ## -
-    pdf(file = plotName1, width = 5.7, height = 8)
-    print(umapClusterNolabel + theme1wLegend + guides(colour = guide_legend(nrow=7, byrow=TRUE, override.aes = list(size=6))))
-    dev.off()
-    ## -
-    pdf(file = plotName2, width = 5.7, height = 8)
-    print(umapCluster + theme1wLegend + guides(colour = guide_legend(nrow=7, byrow=TRUE, override.aes = list(size=6))) )
-    dev.off()
-    ## -
-    if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
-      if ( length(levels(as.factor(seuratObjFinal$expCond))) == 2 ) {
-        pdf(file = plotName3, width = 11, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 3 ) {
-        pdf(file = plotName3, width = 13, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 4 ) {
-        pdf(file = plotName3, width = 21, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) > 4) {
-        pdf(file = plotName3, width = 5.5*length(levels(as.factor(seuratObjFinal$expCond))), height = 7)
+
+      ## --------------------------------------------------------
+      ## 2. re-make UMAP plot
+      if ('umap'%in%names(seuratObjFinal@reductions)) {
+        newResDir          <- paste(resDir, sprintf('new_UMAP_plot_%s', expCondCheckFname), sep = '/')
+        if(!dir.exists(newResDir)) dir.create(newResDir)
+        ## umap plot
+        umapCluster        <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = T, label.size = 6, repel = T) + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
+        umapClusterNolabel <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = F, repel = T) + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
+        if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
+          ## relevel the 'expCond' for split.by= ordering
+          umapSplit          <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = T, label.size = 4, repel = T, split.by = 'expCond') + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
+          umapSplitNolabel   <- DimPlot(seuratObjFinal, reduction = "umap", cols = selectedCol, label = F, label.size = 4, repel = T, split.by = 'expCond') + labs(title = 'UMAP clustering', x = "UMAP 1", y = 'UMAP 2')
+        }
+        ## -
+        if (newAnnotation) {
+          plotName1 = paste(newResDir, 'UMAP_plot_noLabel_integrate_newAnnotation.pdf', sep = '/')
+          plotName2 = paste(newResDir, 'UMAP_plot_wLabel_integrate_newAnnotation.pdf', sep = '/')
+          plotName3 = paste(newResDir, sprintf('UMAP_plot_wLabel_newAnnotation_%s.pdf', expCondCheckFname), sep = '/')
+          plotName4 = paste(newResDir, sprintf('UMAP_plot_noLabel_newAnnotation_%s.pdf', expCondCheckFname), sep = '/')
+        } else {
+          plotName1 = paste(newResDir, 'UMAP_plot_noLabel_integrate_orgAnnotation.pdf', sep = '/')
+          plotName2 = paste(newResDir, 'UMAP_plot_wLabel_integrate_orgAnnotation.pdf', sep = '/')
+          plotName3 = paste(newResDir, sprintf('UMAP_plot_wLabel_orgAnnotation_%s.pdf', expCondCheckFname), sep = '/')
+          plotName4 = paste(newResDir, sprintf('UMAP_plot_noLabel_orgAnnotation_%s.pdf', expCondCheckFname), sep = '/')
+        }
+        ## -
+        pdf(file = plotName1, width = 5.7, height = 8)
+        print(umapClusterNolabel + theme1wLegend + guides(colour = guide_legend(nrow=7, byrow=TRUE, override.aes = list(size=6))))
+        dev.off()
+        ## -
+        pdf(file = plotName2, width = 5.7, height = 8)
+        print(umapCluster + theme1wLegend + guides(colour = guide_legend(nrow=7, byrow=TRUE, override.aes = list(size=6))) )
+        dev.off()
+        ## -
+        if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
+          if ( length(levels(as.factor(seuratObjFinal$expCond))) == 2 ) {
+            pdf(file = plotName3, width = 11, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 3 ) {
+            pdf(file = plotName3, width = 13, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 4 ) {
+            pdf(file = plotName3, width = 21, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) > 4) {
+            pdf(file = plotName3, width = 5.5*length(levels(as.factor(seuratObjFinal$expCond))), height = 7)
+          }
+          print(umapSplit + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
+          dev.off()
+        }
+        ## -
+        if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
+          if ( length(levels(as.factor(seuratObjFinal$expCond))) == 2 ) {
+            pdf(file = plotName4, width = 11, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 3 ) {
+            pdf(file = plotName4, width = 13, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 4 ) {
+            pdf(file = plotName4, width = 21, height = 7)
+          } else if ( length(levels(as.factor(seuratObjFinal$expCond))) > 4) {
+            pdf(file = plotName4, width = 5.5*length(levels(as.factor(seuratObjFinal$expCond))), height = 7)
+          }
+          print(umapSplitNolabel + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
+          dev.off()
+        }
+        print(sprintf('END step1: remake tSNE/UMAP plots'))
+      } else {
+        print("NOTE: reduction UMAP does not exist in provided RDS, no UMAP plot can be generated.")
       }
-      print(umapSplit + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
-      dev.off()
+
+      ## -
+
     }
-    ## -
-    if ( length(levels(as.factor(seuratObjFinal$expCond))) > 1 ) {
-      if ( length(levels(as.factor(seuratObjFinal$expCond))) == 2 ) {
-        pdf(file = plotName4, width = 11, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 3 ) {
-        pdf(file = plotName4, width = 13, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) == 4 ) {
-        pdf(file = plotName4, width = 21, height = 7)
-      } else if ( length(levels(as.factor(seuratObjFinal$expCond))) > 4) {
-        pdf(file = plotName4, width = 5.5*length(levels(as.factor(seuratObjFinal$expCond))), height = 7)
-      }
-      print(umapSplitNolabel + theme1wLegend + guides(colour = guide_legend(nrow=4, byrow=TRUE, override.aes = list(size=6))) )
-      dev.off()
-    }
-    print(sprintf('END step1: remake tSNE/UMAP plots'))
-    ## -
   }
   ## -------------------------------------------------------------------------------------
   ## 2. summarize cell no in each identified clusters, if cellNo summary will change automatically based on above whether to update on 'expCondCheckFname'

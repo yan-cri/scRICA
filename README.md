@@ -1,4 +1,3 @@
-TEST
 # scRICA: **s**ingle-**c**ell **R**NA-Seq **I**ntegrative **C**omparative **A**nalysis 
 
 ### 1. What is scRICA

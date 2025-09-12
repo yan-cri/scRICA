@@ -6,7 +6,7 @@
 \usage{
 getClusterMarkers(
   qcProcessedResults,
-  integrationMethod = "CCA",
+  integrationMethod = "RPCA",
   nfeatures = 2000,
   resDirName = NULL,
   topN = 10,

@@ -14,7 +14,8 @@ processQC(
   minFeatures = 200,
   mtFiltering = F,
   mtPerCutoff = NULL,
-  nfeatures = 5000
+  nfeatures = 5000,
+  norm.method = "log.norm"
 )
 }
 \arguments{
@@ -35,6 +36,8 @@ processQC(
 \item{mtFiltering}{logical option to indicate whether to filter high mitochondrial content specified in option 'mtPerCutoff', by default 'FALSE'.}
 
 \item{mtPerCutoff}{if 'mtFiltering = T', this option is required to indicate the percentage cut-off for mitochondrial content filtering.}
+
+\item{norm.method}{3 normalization options, log.normalize, SCT, or SCT.regression with regression on rRNA and MT contents.}
 }
 \value{
 the QC analysis results saved in defined 'resDir' under current working directory.
