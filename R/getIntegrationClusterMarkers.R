@@ -228,9 +228,13 @@ getClusterMarkers <- function(qcProcessedResults, integrationMethod = 'RPCA', nf
   dev.off()
   ## 4.3 umap, tsne, knn/clusters
   seuratObjFinal                <- RunUMAP(seuratObjFinal, reduction = "pca", dims = 1:20)
+  print("Complete UMAP")
   seuratObjFinal                <- FindNeighbors(seuratObjFinal, reduction = "pca", dims = 1:20)
+  print("Complete neighbor finding")
   seuratObjFinal                <- FindClusters(seuratObjFinal, resolution = 0.5)
-  seuratObjFinal                <- RunTSNE(object = seuratObjFinal, dims = 1:20)
+  print("Complete clustering")
+  seuratObjFinal                <- RunTSNE(object = seuratObjFinal, dims = 1:20, check_duplicates = FALSE)
+  print("Complete TSNE")
   ##--------------------------------------------------------------------------------------##
   ## PCA plot
   pcaCluster  <- DimPlot(seuratObjFinal, reduction = "pca") + labs(title = 'PCA clustering', x = "PC 1", y = 'PC 2')
